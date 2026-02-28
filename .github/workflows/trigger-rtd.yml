@@ -1,0 +1,64 @@
+name: Trigger ReadTheDocs Build
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "docs/**"
+
+jobs:
+  trigger-rtd:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger ReadTheDocs build and poll
+        env:
+          RTD_TOKEN: ${{ secrets.READTHEDOCS_TOKEN }}
+        run: |
+          RTD_PROJECT="plex-plugin-docs"
+          RTD_VERSION="latest"
+          AUTH_HEADER="Authorization: Token ${RTD_TOKEN}"
+
+          echo "Triggering build..."
+          RESPONSE=$(curl -sf -X POST \
+            -H "$AUTH_HEADER" \
+            "https://readthedocs.org/api/v3/projects/${RTD_PROJECT}/versions/${RTD_VERSION}/builds/")
+
+          BUILD_ID=$(echo "$RESPONSE" | python3 -c "import sys,json; print(json.load(sys.stdin)['build']['id'])")
+          echo "Build ID: $BUILD_ID"
+          echo "Build URL: https://readthedocs.org/projects/${RTD_PROJECT}/builds/${BUILD_ID}/"
+
+          TIMEOUT=600   # 10 minutes
+          ELAPSED=0
+          POLL_INTERVAL=15
+
+          while [ $ELAPSED -lt $TIMEOUT ]; do
+            sleep $POLL_INTERVAL
+            ELAPSED=$((ELAPSED + POLL_INTERVAL))
+
+            STATUS=$(curl -sf \
+              -H "$AUTH_HEADER" \
+              "https://readthedocs.org/api/v3/projects/${RTD_PROJECT}/builds/${BUILD_ID}/")
+
+            STATE=$(echo "$STATUS" | python3 -c "import sys,json; print(json.load(sys.stdin)['state']['code'])")
+            echo "[$ELAPSED s] State: $STATE"
+
+            if [ "$STATE" = "finished" ]; then
+              SUCCESS=$(echo "$STATUS" | python3 -c "import sys,json; print(json.load(sys.stdin)['success'])")
+              if [ "$SUCCESS" = "True" ]; then
+                echo "Build succeeded!"
+                exit 0
+              else
+                echo "Build failed!"
+                exit 1
+              fi
+            fi
+
+            if [ "$STATE" = "cancelled" ]; then
+              echo "Build was cancelled."
+              exit 1
+            fi
+          done
+
+          echo "Timed out waiting for build after ${TIMEOUT}s."
+          exit 1
