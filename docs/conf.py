@@ -19,3 +19,12 @@ html_theme_options = {
     'sticky_navigation': True,
     'titles_only': False,
 }
+
+# Add GitHub link in the theme header (sphinx_rtd_theme uses these html_context keys)
+html_context = {
+    'display_github': True,
+    'github_user': 'Xavier-Lam',
+    'github_repo': 'plex-plugin-docs',
+    'github_version': 'main',
+    'conf_py_path': '/docs/',
+}
