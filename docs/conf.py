@@ -1,6 +1,6 @@
 # Configuration file for the Sphinx documentation builder.
 
-project = 'Plex Plugin Reference'
+project = 'Plex Plugin Docs'
 author = 'Xavier-Lam'
 
 extensions = []
