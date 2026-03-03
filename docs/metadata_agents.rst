@@ -89,7 +89,7 @@ All agent base classes share the following class attributes:
    The ``version`` attribute on an agent class controls the *agent API style*:
 
    - **version 0** (legacy) — ``search()`` receives a :ref:`MediaContainer <mediacontainer>` for ``results`` and you append :ref:`MetadataSearchResult <metadatasearchresult>` objects via ``results.Append(...)``.
-   - **version 1+** (modern) — ``search()`` receives an :ref:`ObjectContainer <objectcontainer>` for ``results``.
+   - **version 1+** (modern) — ``search()`` receives an :ref:`ObjectContainer <objectcontainer>` for ``results`` and you append :ref:`SearchResult <searchresult>` objects via ``results.Append(...)``.
 
    This is **not** the same as ``PlexFrameworkVersion`` in ``Info.plist``, which
    selects the framework bootstrap version (always ``"2"`` for modern plug-ins).
@@ -108,7 +108,7 @@ Called when the server needs search results for a media item.
      - Type
      - Description
    * - results
-     - :ref:`ObjectContainer <objectcontainer>` or :ref:`MediaContainer <mediacontainer>`
+     - :ref:`MediaContainer <mediacontainer>` (V0) or :ref:`ObjectContainer <objectcontainer>` (V1+)
      - Container to append results to.
    * - media
      - :ref:`Media.Movie <media-movie>`, :ref:`Media.TV_Show <media-tv-show>`, :ref:`Media.Artist <media-artist>`, :ref:`Media.Album <media-album>`, etc.
@@ -161,7 +161,11 @@ For version 0 agents, append :ref:`MetadataSearchResult <metadatasearchresult>` 
 
    results.Append(MetadataSearchResult(id='123', name='Movie Title', year=2020, score=95, lang=lang))
 
-For version 1+ agents, append SearchResult objects to the :ref:`ObjectContainer <objectcontainer>`.
+For version 1+ agents, append :ref:`SearchResult <searchresult>` objects:
+
+.. code-block:: python
+
+   results.Append(SearchResult(id='123', name='Movie Title', year=2020, score=95, thumb=thumb_url))
 
 update(self, metadata, media, lang, force=False)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -226,43 +230,8 @@ When ``version`` is set to ``1`` or higher, ``update()`` is called at the
 **parent level** instead of once per individual item. This is the key practical
 difference from version 0.
 
-**Why this matters for hierarchical media types:**
-
-With version 0, for a TV show agent, ``update()`` is called once for each
-*episode* — the ``guid`` passed to you identifies a specific episode and the
-``metadata`` object represents that episode. You must make a separate network
-request for every episode.
-
-With version 1+, when any episode (or the show itself) needs a metadata
-refresh, the framework calls your ``update()`` with the **TV show's** GUID
-instead. The ``metadata`` object represents the whole show, and you can
-populate ``metadata.seasons[n].episodes[m]`` for all episodes in a single
-call. The optional ``child_guid`` parameter tells you which specific child
-item triggered the update, in case you want to prioritise it.
-
 For flat media types (movies, music tracks) the behaviour is the same as
 version 0 — there is no parent to promote to.
-
-**Summary of changes the framework applies for version 1+:**
-
-- **Parent GUID promotion** — When PMS supplies a parent GUID alongside the
-  child's GUID (e.g. the show's GUID alongside an episode's GUID), the
-  framework promotes the *parent* GUID to be the primary lookup key passed as
-  ``metadata``. The child's original GUID is forwarded as the ``child_guid``
-  keyword argument (and its database ID as ``child_id``). As a result, ``update()``
-  receives the parent metadata object (e.g. :ref:`TV_Show <tv-show>`,
-  :ref:`Artist <artist>`) rather than the child object.
-
-- **Parent-rooted media tree** — The :ref:`MediaTree <mediatree>` passed as
-  the ``media`` argument is also rooted at the parent, so
-  ``media.seasons``, ``media.episodes``, ``media.tracks`` etc. reflect the
-  full hierarchy under the parent item rather than just the single child.
-
-- **Versioned model class** — The framework may resolve a different metadata
-  model class for version 1+ agents. For example, a version 1 music artist
-  agent receives a ``ModernArtist`` model instance that can expose richer or
-  differently structured attributes compared to the version 0 ``LegacyArtist``.
-  The specific class used depends on the model definition.
 
 .. note::
 

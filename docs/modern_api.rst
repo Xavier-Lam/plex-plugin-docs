@@ -61,7 +61,7 @@ The top-level container for returning content to the client.
      - str
      - Source title override.
 
-Supported child types: :ref:`DirectoryObject <directoryobject>`, :ref:`NextPageObject <nextpageobject>`, :ref:`InputDirectoryObject <inputdirectoryobject>`, :ref:`PopupDirectoryObject <popupdirectoryobject>`, :ref:`PrefsObject <prefsobject>`, :ref:`SearchDirectoryObject <searchdirectoryobject>`, :ref:`PlaylistObject <playlistobject>`, :ref:`MovieObject <movieobject>`, :ref:`VideoClipObject <videoclipobject>`, :ref:`EpisodeObject <episodeobject>`, :ref:`SeasonObject <seasonobject>`, :ref:`TVShowObject <tvshowobject>`, :ref:`ArtistObject / AlbumObject / PhotoObject / PhotoAlbumObject <artistobject-albumobject>`, :ref:`TrackObject <trackobject>`, MetadataItem, SearchResult, and all :ref:`Video Extra Types <video-extra-types>`.
+Supported child types: :ref:`DirectoryObject <directoryobject>`, :ref:`NextPageObject <nextpageobject>`, :ref:`InputDirectoryObject <inputdirectoryobject>`, :ref:`PopupDirectoryObject <popupdirectoryobject>`, :ref:`PrefsObject <prefsobject>`, :ref:`SearchDirectoryObject <searchdirectoryobject>`, :ref:`PlaylistObject <playlistobject>`, :ref:`MovieObject <movieobject>`, :ref:`VideoClipObject <videoclipobject>`, :ref:`EpisodeObject <episodeobject>`, :ref:`SeasonObject <seasonobject>`, :ref:`TVShowObject <tvshowobject>`, :ref:`ArtistObject / AlbumObject / PhotoObject / PhotoAlbumObject <artistobject-albumobject>`, :ref:`TrackObject <trackobject>`, :ref:`MetadataItem <metadataitem>`, :ref:`SearchResult <searchresult>`, and all :ref:`Video Extra Types <video-extra-types>`.
 
 add(obj)
 ~~~~~~~~
@@ -414,6 +414,107 @@ ArtistObject / AlbumObject / PhotoObject / PhotoAlbumObject
 -----------------------------------------------------------
 
 Non-media containers corresponding to their model types.
+
+.. _metadataitem:
+
+MetadataItem
+------------
+
+A container representing a node in a hierarchical metadata tree. Used in agent version 1+
+object trees returned from PMS; not typically constructed directly in plugin code.
+``MetadataItem`` children can be nested recursively.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 25 10 65
+
+   * - Attribute
+     - Type
+     - Description
+   * - type
+     - str
+     - Media type identifier (e.g. ``"movie"``, ``"show"``, ``"season"``, ``"episode"``).
+   * - id
+     - str
+     - Unique identifier of the metadata item.
+   * - title
+     - str
+     - Display title.
+   * - guid
+     - str
+     - Plex GUID string (e.g. ``"com.plexapp.agents.imdb://tt1234567"``).
+   * - index
+     - str
+     - Positional index (season number, episode number, etc.).
+   * - originally_available_at
+     - str
+     - Original air / release date (ISO 8601 string).
+   * - score
+     - str
+     - Match confidence score (0–100).
+   * - thumb
+     - str
+     - Thumbnail URL.
+   * - matched
+     - str
+     - ``"1"`` if the item has been matched to a metadata source, ``"0"`` otherwise.
+
+.. _searchresult:
+
+SearchResult
+------------
+
+Represents a single candidate returned by an agent ``search()`` in version 1+. Append
+``SearchResult`` objects to the :ref:`ObjectContainer <objectcontainer>` passed as
+``results``. ``SearchResult`` children can be nested to represent hierarchical results
+(e.g. episodes within a show).
+
+.. list-table::
+   :header-rows: 1
+   :widths: 25 10 65
+
+   * - Attribute
+     - Type
+     - Description
+   * - type
+     - str
+     - Media type identifier.
+   * - id
+     - str
+     - Source-specific identifier used to retrieve metadata in ``update()``.
+   * - name
+     - str
+     - Display name of the result.
+   * - guid
+     - str
+     - Plex GUID string.
+   * - index
+     - str
+     - Positional index.
+   * - year
+     - str
+     - Release year.
+   * - score
+     - str
+     - Match confidence score (0–100).
+   * - thumb
+     - str
+     - Thumbnail URL.
+   * - matched
+     - str
+     - ``"1"`` if already matched.
+   * - parentName
+     - str
+     - Name of the parent item (e.g. show title for an episode result).
+   * - parentID
+     - str
+     - Identifier of the parent item.
+   * - parentGUID
+     - str
+     - Plex GUID of the parent item.
+   * - parentIndex
+     - str
+     - Index of the parent item (e.g. season number).
 
 .. _mediaobject:
 
