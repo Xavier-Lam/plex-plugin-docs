@@ -1,3 +1,5 @@
+.. _template-types:
+
 =========================
 Template Attribute Types
 =========================
@@ -198,18 +200,19 @@ Removes keys not in the provided list.
 
 .. _templateobjectcontainer:
 
-Template.ObjectContainer
-------------------------
+Extras Container (Template.ObjectContainer)
+--------------------------------------------
 
 .. code-block:: python
 
    Template.ObjectContainer(*classes)
 
-A typed container for model interface objects, used for the ``extras`` attribute on metadata models. Parameterized by the accepted object classes (e.g. Trailer, DeletedScene, BehindTheScenes, etc.).
+An internal template type used to define the ``extras`` attribute on metadata
+models. You do not construct this directly — instead, interact with ``extras``
+via the ``add()`` method, passing :ref:`Video Extra <video-extra-types>` objects:
 
 .. code-block:: python
 
-   # Add a trailer extra
    trailer = TrailerObject(
        url='https://example.com/trailer',
        title='Official Trailer',
@@ -217,6 +220,9 @@ A typed container for model interface objects, used for the ``extras`` attribute
        thumb='https://example.com/thumb.jpg'
    )
    metadata.extras.add(trailer)
+
+See :ref:`Video Extra Types <video-extra-types>` for all available extra types
+and their attributes.
 
 add(obj)
 ~~~~~~~~

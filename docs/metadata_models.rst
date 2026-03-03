@@ -113,7 +113,7 @@ Movie
      - ProxyContainer
      - Theme music files.
    * - extras
-     - :ref:`Template.ObjectContainer <templateobjectcontainer>`
+     - :ref:`extras container <video-extra-types>`
      - Video extras (Trailer, BehindTheScenes, etc.).
 
 .. _tv-show:
@@ -183,7 +183,7 @@ TV_Show
      - :ref:`Map <map>`\[:ref:`Season <season>`]
      - Seasons keyed by season number.
    * - extras
-     - :ref:`Template.ObjectContainer <templateobjectcontainer>`
+     - :ref:`extras container <video-extra-types>`
      - Video extras.
 
 .. _season:
@@ -214,7 +214,7 @@ Season
      - :ref:`Map <map>`\[:ref:`Episode <episode>`]
      - Episodes keyed by episode number.
    * - extras
-     - :ref:`Template.ObjectContainer <templateobjectcontainer>`
+     - :ref:`extras container <video-extra-types>`
      - Video extras.
 
 .. _episode:
@@ -272,7 +272,7 @@ Episode
      - :ref:`ProxyContainer <proxycontainer>`
      - Episode thumbnails.
    * - extras
-     - :ref:`Template.ObjectContainer <templateobjectcontainer>`
+     - :ref:`extras container <video-extra-types>`
      - Video extras.
 
 .. _artist:
@@ -324,7 +324,7 @@ Artist
      - ProxyContainer
      - Theme music.
    * - extras
-     - :ref:`Template.ObjectContainer <templateobjectcontainer>`
+     - :ref:`extras container <video-extra-types>`
      - Music videos, interviews, etc.
 
 .. _album:
@@ -434,7 +434,7 @@ Track
      - Set[str]
      - Tags.
    * - extras
-     - :ref:`Template.ObjectContainer <templateobjectcontainer>`
+     - :ref:`extras container <video-extra-types>`
      - Music video extras.
    * - lyrics
      - :ref:`ProxyContainer <proxycontainer>`
@@ -604,7 +604,31 @@ Concert
 Video Extra Types
 -----------------
 
-All extras inherit from VideoExtra and can be added to the ``extras`` :ref:`Template.ObjectContainer <templateobjectcontainer>` on metadata models.
+The ``extras`` attribute on metadata models is a container that accepts extra
+video objects. Each extra type is a concrete class published as a global name
+in the sandbox. All extras inherit from ``VideoExtra`` (a ``MetadataModel``
+subclass).
+
+**Adding extras:**
+
+.. code-block:: python
+
+   trailer = TrailerObject(
+       url = 'https://example.com/trailer.mp4',
+       title = 'Official Trailer',
+       year = 2020,
+       thumb = 'https://example.com/thumb.jpg'
+   )
+   metadata.extras.add(trailer)
+
+   # Multiple extras
+   metadata.extras.add(BehindTheScenesObject(
+       url = 'https://example.com/bts.mp4',
+       title = 'Making Of'
+   ))
+
+Available extra types
+~~~~~~~~~~~~~~~~~~~~~~
 
 .. list-table::
    :header-rows: 1
@@ -650,7 +674,11 @@ All extras inherit from VideoExtra and can be added to the ``extras`` :ref:`Temp
      - concert
      - Concert video.
 
-Each extra type has the following attributes:
+Common extra attributes
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+All extra types accept these attributes in their constructor and as settable
+properties:
 
 .. list-table::
    :header-rows: 1
@@ -659,6 +687,9 @@ Each extra type has the following attributes:
    * - Attribute
      - Type
      - Description
+   * - url
+     - str
+     - **Required.** URL for the video. Used for URL service resolution.
    * - title
      - str
      - Title.
@@ -695,6 +726,23 @@ Each extra type has the following attributes:
    * - index
      - int
      - Sort index.
-   * - url
+   * - thumb
      - str
-     - URL for the video (required for URL service resolution).
+     - Thumbnail URL.
+
+Music video extra attributes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+``MusicVideoObject``, ``LiveMusicVideoObject``, ``LyricMusicVideoObject``, and
+``ConcertVideoObject`` also support:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 25 20 55
+
+   * - Attribute
+     - Type
+     - Description
+   * - album
+     - str
+     - Associated album name.

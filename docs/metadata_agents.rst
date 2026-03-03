@@ -82,6 +82,19 @@ All agent base classes share the following class attributes:
      - 0
      - Agent version (0 = legacy, 1+ = modern).
 
+.. _agent-version-note:
+
+.. note:: **Agent version vs. PlexFrameworkVersion**
+
+   The ``version`` attribute on an agent class controls the *agent API style*:
+
+   - **version 0** (legacy) — ``search()`` receives a :ref:`MediaContainer <mediacontainer>` for ``results`` and you append :ref:`MetadataSearchResult <metadatasearchresult>` objects via ``results.Append(...)``.
+   - **version 1+** (modern) — ``search()`` receives an :ref:`ObjectContainer <objectcontainer>` for ``results``.
+
+   This is **not** the same as ``PlexFrameworkVersion`` in ``Info.plist``, which
+   selects the framework bootstrap version (always ``"2"`` for modern plug-ins).
+   See :ref:`Info.plist keys <plist-keys>` for details.
+
 search(self, results, media, lang, manual=False)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -203,7 +216,12 @@ Information provided by the scanner for a movie item.
      - Database ID.
    * - primary_metadata
      - :ref:`Movie <movie>` or None
-     - Primary agent's existing metadata (if contributing to another agent).
+     - Primary agent's existing metadata (available when this agent
+       ``contributes_to`` another agent).
+   * - primary_agent
+     - Agent class or None
+     - The primary agent instance (available when this agent
+       ``contributes_to`` another agent).
    * - items
      - list[:ref:`MediaItem <mediaitem>`]
      - Media items with parts/streams.
@@ -243,6 +261,14 @@ Information provided by the scanner for a TV show item.
    * - episodic
      - bool
      - Whether it's episodic (default True).
+   * - primary_metadata
+     - :ref:`TV_Show <tv-show>` or None
+     - Primary agent's existing metadata (available when this agent
+       ``contributes_to`` another agent).
+   * - primary_agent
+     - Agent class or None
+     - The primary agent instance (available when this agent
+       ``contributes_to`` another agent).
    * - seasons
      - dict[str, :ref:`MediaTree <mediatree>`]
      - Dict of season indices → season :ref:`MediaTree <mediatree>` objects.
@@ -275,6 +301,14 @@ Information provided by the scanner for a music artist.
    * - index
      - str
      - Track index.
+   * - primary_metadata
+     - :ref:`Artist <artist>` or None
+     - Primary agent's existing metadata (available when this agent
+       ``contributes_to`` another agent).
+   * - primary_agent
+     - Agent class or None
+     - The primary agent instance (available when this agent
+       ``contributes_to`` another agent).
    * - albums
      - dict[str, :ref:`MediaTree <mediatree>`]
      - Dict of album GUIDs → album :ref:`MediaTree <mediatree>` objects.
@@ -314,6 +348,14 @@ Information provided by the scanner for a music album.
    * - parent_metadata
      - :ref:`Artist <artist>` or None
      - Parent artist's metadata (loaded from ``parentGUID``).
+   * - primary_metadata
+     - :ref:`Album <album>` or None
+     - Primary agent's existing metadata (available when this agent
+       ``contributes_to`` another agent).
+   * - primary_agent
+     - Agent class or None
+     - The primary agent instance (available when this agent
+       ``contributes_to`` another agent).
    * - tracks
      - dict[str, :ref:`MediaTree <mediatree>`]
      - Dict of track indices → track :ref:`MediaTree <mediatree>` objects.

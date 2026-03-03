@@ -139,11 +139,17 @@ Prefs
 -----
 
 Access user preferences defined in ``Contents/DefaultPrefs.json``.
+See :ref:`preferences` for how to define preferences and :ref:`ValidatePrefs <validateprefs>` for the validation callback.
 
 .. code-block:: python
 
    username = Prefs['username']
    quality = Prefs['quality']
+
+.. note::
+
+   All preference values are returned as strings, including booleans
+   (``"true"`` / ``"false"``).
 
 .. _request:
 

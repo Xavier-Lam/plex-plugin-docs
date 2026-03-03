@@ -17,8 +17,8 @@ Bundle Structure
 
    MyPlugin.bundle/
    ├── Contents/
-   │   ├── Info.plist            # Plugin metadata (identifier, title, etc.)
-   │   ├── DefaultPrefs.json     # Default preferences
+   │   ├── Info.plist            # Plugin metadata & configuration
+   │   ├── DefaultPrefs.json     # Default preferences (see Preferences)
    │   ├── Code/
    │   │   └── __init__.py       # Plugin entry point
    │   ├── Resources/            # Images, strings, etc.
@@ -28,9 +28,27 @@ Bundle Structure
    │   │   └── Linux/i386/
    │   ├── Libraries/
    │   │   └── Shared/           # Third-party Python libraries
-   │   └── Services/             # URL Services (optional)
-   │       └── MyService/
-   │           └── ServiceCode.pys
+   │   ├── Strings/              # Locale string files (optional)
+   │   │
+   │   │  # Old-style service directories (declared in Info.plist):
+   │   ├── URL Services/         # URL service modules
+   │   │   └── MyService/
+   │   │       └── ServiceCode.pys
+   │   ├── Search Services/      # Search service modules (optional)
+   │   ├── Related Content Services/  # Related content modules (optional)
+   │   │
+   │   │  # New-style service directories (with ServiceInfo.plist):
+   │   └── Services/
+   │       ├── ServiceInfo.plist # Service declarations
+   │       ├── URL/
+   │       │   └── MyService/
+   │       │       └── ServiceCode.pys
+   │       ├── Search/
+   │       ├── Related Content/
+   │       ├── Shared Code/      # Shared .pys modules
+   │       └── Resources/        # Service-specific resources
+
+See :ref:`services` for full details on how services are organised and configured.
 
 .. _how-the-api-is-exposed:
 

@@ -1,8 +1,12 @@
+.. _preferences:
+
 ===========
 Preferences
 ===========
 
 Preferences are defined in ``Contents/DefaultPrefs.json`` as a JSON array of preference items.
+Access preference values in code via the global :ref:`Prefs <prefs>` object.
+To validate user input when preferences are saved, implement the :ref:`ValidatePrefs <validateprefs>` lifecycle callback.
 
 .. _preference-types:
 

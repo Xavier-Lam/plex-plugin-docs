@@ -22,6 +22,10 @@ ValidatePrefs
 
 Called when the user saves preferences. Return a :ref:`MessageContainer <messagecontainer>` to display feedback.
 
+Preferences are accessed via the global :ref:`Prefs <prefs>` object (``Prefs['key']``) and
+defined in ``Contents/DefaultPrefs.json``. See :ref:`preferences` for the full
+preference system documentation.
+
 .. code-block:: python
 
    def ValidatePrefs():

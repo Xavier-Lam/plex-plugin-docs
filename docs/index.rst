@@ -18,7 +18,9 @@ find any, please report them on `GitHub <https://github.com/Xavier-Lam/plex-plug
    :caption: Contents
 
    overview
+   architecture
    lifecycle
+   preferences
    global_functions
    metadata_agents
    metadata_models
@@ -26,6 +28,7 @@ find any, please report them on `GitHub <https://github.com/Xavier-Lam/plex-plug
    modern_api
    legacy_api
    proxy_objects
+   services
    networking
    parsing
    data_persistence
@@ -35,9 +38,7 @@ find any, please report them on `GitHub <https://github.com/Xavier-Lam/plex-plug
    resources
    threading
    runtime
-   services
    cryptography
    helpers
    constants
-   preferences
    appendix
