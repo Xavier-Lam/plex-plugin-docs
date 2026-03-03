@@ -12,7 +12,9 @@ HTTP client for making web requests.
 Request(url, values=None, headers={}, cacheTime=None, encoding=None, errors=None, timeout=GLOBAL_DEFAULT_TIMEOUT, immediate=False, sleep=0, data=None, follow_redirects=True, method=None) → HTTPRequest
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Creates and returns an HTTP request object.
+Creates and returns an HTTP request object. The request is not sent until
+``.content`` or ``.headers`` is accessed (lazy evaluation), unless
+``immediate=True`` is passed.
 
 .. list-table::
    :header-rows: 1
@@ -71,7 +73,7 @@ Creates and returns an HTTP request object.
      - None
      - HTTP method override (e.g. ``'PUT'``, ``'DELETE'``).
 
-The returned HTTPRequest object has:
+The returned :ref:`HTTPRequest <httprequest>` object has:
 
 - ``.content`` → str — the response body as a string.
 - ``.headers`` → dict — the response HTTP headers.
@@ -141,6 +143,36 @@ ClearCache()
 ~~~~~~~~~~~~
 
 Clears the HTTP response cache.
+
+.. _httprequest:
+
+HTTPRequest
+-----------
+
+The object returned by :ref:`HTTP.Request() <http>`. It is evaluated lazily —
+the network request is not sent until you access ``.content`` or ``.headers``
+(unless ``immediate=True`` was passed to ``HTTP.Request()``).
+
+.. list-table::
+   :header-rows: 1
+   :widths: 20 15 65
+
+   * - Attribute
+     - Type
+     - Description
+   * - ``content``
+     - str
+     - The full response body decoded as a string (using the encoding
+       detected from the response or forced via the ``encoding`` parameter).
+   * - ``headers``
+     - dict
+     - A dictionary of response HTTP headers. Keys are lower-cased.
+
+.. note::
+
+   Accessing ``.content`` on a cached request does **not** re-issue the
+   network request — it returns the cached body. The cache key is the URL
+   (plus any ``values`` / ``data`` body for POST requests).
 
 .. _network:
 

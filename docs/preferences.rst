@@ -50,25 +50,45 @@ Preference Types
 
    * - Type
      - Description
-     - Values
+     - Return type
    * - text
      - Free-text input. Use ``"option": "hidden"`` for passwords.
-     - String.
+     - ``str``
    * - bool
-     - Boolean toggle.
-     - ``"true"`` or ``"false"``.
+     - Boolean toggle. Stored as ``"true"`` / ``"false"`` on disk, but decoded
+       before being returned to plug-in code.
+     - ``bool`` (Python ``True`` / ``False``)
    * - enum
      - Dropdown selection.
-     - Pipe-separated values string.
+     - ``str`` (the selected value)
 
-Access preferences in code:
+.. _prefs:
+
+Accessing Preferences
+---------------------
+
+The global ``Prefs`` object provides read-only access to user preferences defined
+in ``Contents/DefaultPrefs.json``.
 
 .. code-block:: python
 
    username = Prefs['username']
-   if Prefs['subtitles'] == 'true':
-       ...
+   quality = Prefs['quality']
+
+   # Boolean prefs return actual Python bools — use directly in conditions
+   if Prefs['subtitles']:
+       load_subtitles()
 
 .. note::
 
-   All preference values are returned as strings. Boolean prefs return ``"true"`` or ``"false"`` (strings, not Python bools).
+   **Text** and **enum** preference values are returned as strings.
+   **Boolean** preference values are returned as Python ``bool`` (``True`` / ``False``),
+   **not** strings.
+   The framework decodes ``"true"`` / ``"false"`` strings internally via
+   ``BooleanPref.decode_value()`` before returning to plug-in code.
+
+.. warning::
+
+   ``Prefs`` is a read-only accessor — you cannot set preference values from
+   code. Preferences are managed by the server UI and stored in a per-user
+   preferences file.

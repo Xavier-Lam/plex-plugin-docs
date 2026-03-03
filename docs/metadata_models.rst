@@ -72,13 +72,13 @@ Movie
      - Genre tags.
    * - tags
      - Set[str]
-     - General tags.
+     - Tag strings. Serialized as ``<Tag>`` elements.
    * - collections
      - Set[str]
      - Collection names.
    * - similar
      - Set[str]
-     - Similar movie titles.
+     - Similar item names.
    * - writers
      - Set[:ref:`Person <person>`]
      - Writers.
@@ -154,13 +154,13 @@ TV_Show
      - Genres.
    * - tags
      - Set[str]
-     - Tags.
+     - Tag strings. Serialized as ``<Tag>`` elements.
    * - collections
      - Set[str]
      - Collections.
    * - similar
      - Set[str]
-     - Similar shows.
+     - Similar item names.
    * - roles
      - Set[:ref:`Person <person>`]
      - Cast members.
@@ -267,7 +267,7 @@ Episode
      - Guest stars.
    * - tags
      - Set[str]
-     - Tags.
+     - Tag strings. Serialized as ``<Tag>`` elements.
    * - thumbs
      - :ref:`ProxyContainer <proxycontainer>`
      - Episode thumbnails.
@@ -307,7 +307,7 @@ Artist
      - Styles.
    * - similar
      - Set[str]
-     - Similar artists.
+     - Similar item names.
    * - concerts
      - Set[:ref:`Concert <concert>`]
      - Concert info.
@@ -432,7 +432,7 @@ Track
      - Moods.
    * - tags
      - Set[str]
-     - Tags.
+     - Tag strings. Serialized as ``<Tag>`` elements.
    * - extras
      - :ref:`extras container <video-extra-types>`
      - Music video extras.
@@ -604,27 +604,83 @@ Concert
 Video Extra Types
 -----------------
 
-The ``extras`` attribute on metadata models is a container that accepts extra
-video objects. Each extra type is a concrete class published as a global name
-in the sandbox. All extras inherit from ``VideoExtra`` (a ``MetadataModel``
-subclass).
+The ``extras`` attribute on metadata models is an
+:ref:`ObjectContainer <objectcontainer>`-based container that accepts extra
+video objects. Each extra type is a class published as a global name in the
+sandbox (e.g. ``TrailerObject``). All extras inherit from ``VideoExtra`` (a
+``MetadataModel`` subclass).
+
+.. note::
+
+   The extras container is **not** a :ref:`Set <set>` or :ref:`Map <map>`.
+   It is an ``ObjectContainerObject`` that wraps an :ref:`ObjectContainer <objectcontainer>`.
+   Use ``metadata.extras.add(...)`` to add items.
+
+.. warning::
+
+   **Extras cannot be deserialized.** The framework's
+   ``ObjectContainerObject._deserialize()`` is a no-op. This means that each
+   time ``update()`` is called, the extras container starts **empty** — the
+   agent must re-populate all extras on every update. Extras saved by one agent
+   cannot be read back by the same or another agent in a subsequent call.
+
+Extras per Media Type
+~~~~~~~~~~~~~~~~~~~~~~
+
+Not all metadata models support extras. The allowed extra types differ by
+model:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 20 80
+
+   * - Model
+     - Allowed Extra Types
+   * - :ref:`Movie <movie>`
+     - TrailerObject, DeletedSceneObject, BehindTheScenesObject,
+       InterviewObject, SceneOrSampleObject, FeaturetteObject, ShortObject,
+       OtherObject
+   * - :ref:`TV_Show <tv-show>`
+     - *(same as Movie)*
+   * - :ref:`Season <season>`
+     - *(same as Movie)*
+   * - :ref:`Episode <episode>`
+     - *(same as Movie)*
+   * - :ref:`Artist <artist>`
+     - MusicVideoObject, LiveMusicVideoObject, LyricMusicVideoObject,
+       InterviewObject, BehindTheScenesObject, ConcertVideoObject
+   * - :ref:`Track <track>`
+     - MusicVideoObject, LyricMusicVideoObject
+   * - :ref:`Album <album>`
+     - **No extras** — Album does not have an ``extras`` attribute.
+   * - :ref:`Photo <photo>` / :ref:`PhotoAlbum <photoalbum>`
+     - **No extras** — Photo and PhotoAlbum do not have an ``extras`` attribute.
 
 **Adding extras:**
 
 .. code-block:: python
 
+   # Online extras — use 'url' to specify a URL (resolved via URL Services)
    trailer = TrailerObject(
-       url = 'https://example.com/trailer.mp4',
-       title = 'Official Trailer',
-       year = 2020,
-       thumb = 'https://example.com/thumb.jpg'
+       url='https://example.com/trailer.mp4',
+       title='Official Trailer',
+       year=2020,
+       thumb='https://example.com/thumb.jpg'
    )
    metadata.extras.add(trailer)
 
-   # Multiple extras
+   # Local file extras — use 'file' to specify a local file path
+   # (Agent plug-ins only; LocalMedia.bundle uses this pattern)
    metadata.extras.add(BehindTheScenesObject(
-       url = 'https://example.com/bts.mp4',
-       title = 'Making Of'
+       title='Making Of',
+       file='/path/to/behindthescenes.mp4'
+   ))
+
+   # Music video extras on an Artist
+   metadata.extras.add(MusicVideoObject(
+       url='https://example.com/musicvideo.mp4',
+       title='Song Title',
+       album='Album Name'
    ))
 
 Available extra types
@@ -678,18 +734,53 @@ Common extra attributes
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 All extra types accept these attributes in their constructor and as settable
-properties:
+properties. The first group comes from the ``MetadataObject`` superclass
+(added by ``objectkit.py`` when publishing the class); the second group comes
+from the ``VideoExtra`` model definition.
+
+**Source attributes (MetadataObject):**
 
 .. list-table::
    :header-rows: 1
-   :widths: 25 20 55
+   :widths: 20 15 65
 
    * - Attribute
      - Type
      - Description
    * - url
      - str
-     - **Required.** URL for the video. Used for URL service resolution.
+     - Video URL. PMS resolves this via URL Services to obtain playable media.
+       Optional — use either ``url`` or ``file``.
+   * - file
+     - str
+     - Local file path to the video. **Agent plug-ins only** — this attribute
+       is not available in channel (Resource) plug-ins. Optional — use either
+       ``url`` or ``file``.
+   * - http_headers
+     - dict
+     - HTTP headers to send when fetching the URL.
+   * - user_agent
+     - str
+     - User-Agent header (shorthand).
+   * - http_cookies
+     - str
+     - Cookie header (shorthand).
+   * - deferred
+     - bool
+     - Whether this extra should be lazily resolved.
+   * - source_icon
+     - str
+     - Icon for the source provider.
+
+**Model attributes (VideoExtra):**
+
+.. list-table::
+   :header-rows: 1
+   :widths: 20 15 65
+
+   * - Attribute
+     - Type
+     - Description
    * - title
      - str
      - Title.
@@ -728,9 +819,12 @@ properties:
      - Sort index.
    * - thumb
      - str
-     - Thumbnail URL.
+     - Thumbnail URL (synthetic — written to XML but not persisted to model).
+   * - art_url
+     - str
+     - Art URL (synthetic, serialized as ``art`` in XML).
 
-Music video extra attributes
+Music-video extra attributes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ``MusicVideoObject``, ``LiveMusicVideoObject``, ``LyricMusicVideoObject``, and
@@ -745,4 +839,4 @@ Music video extra attributes
      - Description
    * - album
      - str
-     - Associated album name.
+     - Associated album name (serialized as ``parentTitle`` in XML).

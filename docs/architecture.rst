@@ -61,11 +61,17 @@ the sandbox:
 This is why plug-in code can reference ``HTTP.Request()``, ``JSON.ObjectFromString()``,
 or ``Agent.Movies`` without any explicit ``import`` statements.
 
+.. _policy-system:
+
 Policy System
 --------------
 
 Security policies control what APIs and operations are available in different
 contexts:
+
+For plug-in code, the active policy is determined by the ``PlexPluginCodePolicy``
+key in the bundle's ``Info.plist``. Services and model files always use their
+dedicated policies regardless of this setting.
 
 .. list-table::
    :header-rows: 1
@@ -76,8 +82,11 @@ contexts:
    * - **Standard**
      - Default for most plug-ins. General-purpose API access.
    * - **Elevated**
-     - Relaxed restrictions. Access to additional APIs like raw file system
-       operations. Set via ``PlexPluginCodePolicy`` in ``Info.plist``.
+     - Relaxed restrictions. Grants access to additional built-ins (``hasattr``,
+       ``getattr``, ``setattr``, ``dir``, ``super``, ``type``), allows bundled
+       native libraries, enables bundle-provided import whitelist extensions,
+       and runs with elevated execution privileges.
+       Set via ``PlexPluginCodePolicy = Elevated`` in ``Info.plist``.
    * - **ServicePolicy**
      - Applied to service code (``ServiceCode.pys``). Similar to Standard
        with service-specific additions.

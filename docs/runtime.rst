@@ -2,12 +2,20 @@
 Runtime & Plugin API
 ====================
 
+This chapter documents global objects that expose runtime information about the
+plug-in, the server, and the current HTTP request. These objects are primarily
+used in **route handlers** (registered via ``@route`` or
+``Plugin.AddPrefixHandler``), **URL service handlers**, and
+**search/related content service handlers** — anywhere plug-in code is invoked
+in the context of an HTTP request from a Plex client.
+
 .. _plugin:
 
 Plugin
 ------
 
-Plugin information (legacy).
+Plugin information (legacy). Used in channel plug-ins for prefix and view group
+registration.
 
 Identifier → str
 ~~~~~~~~~~~~~~~~~
@@ -69,7 +77,8 @@ Registers a view group. Legacy.
 Client
 ------
 
-Client information for the current request.
+Client information for the current request. Available in route handlers and
+service handlers to identify which Plex client is making the request.
 
 Platform → str
 ~~~~~~~~~~~~~~~
@@ -133,30 +142,23 @@ ServerVersion → str
 
 Plex Media Server version.
 
-.. _prefs:
+.. seealso::
 
-Prefs
------
-
-Access user preferences defined in ``Contents/DefaultPrefs.json``.
-See :ref:`preferences` for how to define preferences and :ref:`ValidatePrefs <validateprefs>` for the validation callback.
-
-.. code-block:: python
-
-   username = Prefs['username']
-   quality = Prefs['quality']
-
-.. note::
-
-   All preference values are returned as strings, including booleans
-   (``"true"`` / ``"false"``).
+   :ref:`Prefs <prefs>` — Accessing user preferences is documented in the
+   :ref:`Preferences <preferences>` chapter.
 
 .. _request:
 
 Request
 -------
 
-Current HTTP request context.
+Current HTTP request context. Available in route handlers and service handlers
+to read request data from the Plex client. For example, use ``Request.Headers``
+to read custom headers, or ``Request.Body`` to access POST data.
+
+See also: :ref:`HTTP.Request <http>` in the Networking API, which is a
+**different** object — it creates *outgoing* HTTP requests to external servers,
+while ``Request`` here represents the *incoming* request from a Plex client.
 
 Headers → dict
 ~~~~~~~~~~~~~~~
@@ -178,7 +180,8 @@ HTTP method (``'GET'``, ``'POST'``, etc.).
 Response
 --------
 
-Current HTTP response context.
+Current HTTP response context. Use in route handlers and service handlers to
+set response headers or override the status code before returning.
 
 Headers → dict
 ~~~~~~~~~~~~~~~
@@ -195,7 +198,8 @@ HTTP response status code. Get / set.
 Route
 -----
 
-Route management.
+Route management. Used by channel plug-ins to programmatically register URL
+handlers (as an alternative to the ``@route`` decorator).
 
 Connect(path, f, method=['GET'], allow_sync=False)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

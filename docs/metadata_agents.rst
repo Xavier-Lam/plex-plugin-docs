@@ -112,13 +112,48 @@ Called when the server needs search results for a media item.
      - Container to append results to.
    * - media
      - :ref:`Media.Movie <media-movie>`, :ref:`Media.TV_Show <media-tv-show>`, :ref:`Media.Artist <media-artist>`, :ref:`Media.Album <media-album>`, etc.
-     - Media object with hints from the scanner (name, year, etc.). The concrete type depends on the agent base class.
+     - Media hints object (a ``MediaObject`` instance) with information from
+       the scanner (name, year, etc.). The concrete type depends on the agent
+       base class.
    * - lang
      - str
      - :ref:`Language code <language>` for the search.
    * - manual
      - bool
      - True if the user initiated the search manually.
+
+Optional parameters (passed if the function signature accepts them):
+
+.. list-table::
+   :header-rows: 1
+   :widths: 15 15 70
+
+   * - Parameter
+     - Type
+     - Description
+   * - primary
+     - bool
+     - ``True`` if this is the primary agent for the library, ``False`` if
+       contributing.
+
+**Contributing agent attributes** — When an agent ``contributes_to`` another
+agent, the ``media`` object in ``search()`` also has:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 20 25 55
+
+   * - Attribute
+     - Type
+     - Description
+   * - primary_metadata
+     - model instance or None
+     - The primary agent's existing metadata object (e.g. :ref:`Movie <movie>`,
+       :ref:`TV_Show <tv-show>`, etc.). ``None`` if this is the primary agent.
+   * - primary_agent
+     - str or None
+     - Identifier string of the primary agent. ``None`` if this is the primary
+       agent.
 
 For version 0 agents, append :ref:`MetadataSearchResult <metadatasearchresult>` objects:
 
@@ -142,16 +177,100 @@ Called when the server needs metadata for a matched item.
      - Description
    * - metadata
      - :ref:`Movie <movie>`, :ref:`TV_Show <tv-show>`, :ref:`Artist <artist>`, :ref:`Album <album>`, etc.
-     - The metadata model instance to populate. The concrete type depends on the agent base class.
+     - The metadata model instance to populate. This is **your agent's** data
+       object loaded from ``metadata_cls[guid]``. The concrete type depends on
+       the agent base class.
    * - media
      - :ref:`Media.Movie <media-movie>`, :ref:`Media.TV_Show <media-tv-show>`, :ref:`Media.Artist <media-artist>`, :ref:`Media.Album <media-album>`, etc.
-     - The media object with file info, parts, and streams. Attributes from the underlying :ref:`MediaTree <mediatree>` (such as ``items``, ``seasons``, ``episodes``) are accessible directly on this object.
+     - The media information. In ``update()``, this is a
+       :ref:`MediaTree <mediatree>` with file info, parts, and streams.
+       Attributes like ``items``, ``seasons``, ``episodes`` are accessible
+       directly.
    * - lang
      - str
      - Preferred :ref:`language code <language>`.
    * - force
      - bool
      - True if the user forced a metadata refresh.
+
+Optional parameters (passed if the function signature accepts them):
+
+.. list-table::
+   :header-rows: 1
+   :widths: 15 15 70
+
+   * - Parameter
+     - Type
+     - Description
+   * - child_guid
+     - str
+     - GUID of a specific child item (for version 1+ parent-level agents).
+   * - child_id
+     - str
+     - Database ID of a specific child item.
+   * - periodic
+     - bool
+     - ``True`` if this update was triggered by a periodic refresh.
+   * - prefs
+     - dict
+     - Library section preferences (music agents). Keys include:
+       ``artistBio``, ``albumReviews``, ``popularTracks``, ``concerts``,
+       ``genres``, ``albumPosters``; values are integers (0 or 1).
+
+.. _update-v1-differences:
+
+Version 1+ update behavior
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+When ``version`` is set to ``1`` or higher, ``update()`` is called at the
+**parent level** instead of once per individual item. This is the key practical
+difference from version 0.
+
+**Why this matters for hierarchical media types:**
+
+With version 0, for a TV show agent, ``update()`` is called once for each
+*episode* — the ``guid`` passed to you identifies a specific episode and the
+``metadata`` object represents that episode. You must make a separate network
+request for every episode.
+
+With version 1+, when any episode (or the show itself) needs a metadata
+refresh, the framework calls your ``update()`` with the **TV show's** GUID
+instead. The ``metadata`` object represents the whole show, and you can
+populate ``metadata.seasons[n].episodes[m]`` for all episodes in a single
+call. The optional ``child_guid`` parameter tells you which specific child
+item triggered the update, in case you want to prioritise it.
+
+For flat media types (movies, music tracks) the behaviour is the same as
+version 0 — there is no parent to promote to.
+
+**Summary of changes the framework applies for version 1+:**
+
+- **Parent GUID promotion** — When PMS supplies a parent GUID alongside the
+  child's GUID (e.g. the show's GUID alongside an episode's GUID), the
+  framework promotes the *parent* GUID to be the primary lookup key passed as
+  ``metadata``. The child's original GUID is forwarded as the ``child_guid``
+  keyword argument (and its database ID as ``child_id``). As a result, ``update()``
+  receives the parent metadata object (e.g. :ref:`TV_Show <tv-show>`,
+  :ref:`Artist <artist>`) rather than the child object.
+
+- **Parent-rooted media tree** — The :ref:`MediaTree <mediatree>` passed as
+  the ``media`` argument is also rooted at the parent, so
+  ``media.seasons``, ``media.episodes``, ``media.tracks`` etc. reflect the
+  full hierarchy under the parent item rather than just the single child.
+
+- **Versioned model class** — The framework may resolve a different metadata
+  model class for version 1+ agents. For example, a version 1 music artist
+  agent receives a ``ModernArtist`` model instance that can expose richer or
+  differently structured attributes compared to the version 0 ``LegacyArtist``.
+  The specific class used depends on the model definition.
+
+.. note::
+
+   ``child_guid`` and ``child_id`` are only injected into ``update()`` when
+   PMS actually provides a parent GUID (i.e. when a child item triggers the
+   update). If ``update()`` is called for the top-level item itself (e.g. the
+   show refresh button), these parameters may not be present. Always make them
+   optional in your signature: ``def update(self, metadata, media, lang, force=False, child_guid=None, child_id=None)``.
 
 Example Agent
 ~~~~~~~~~~~~~
@@ -214,14 +333,6 @@ Information provided by the scanner for a movie item.
    * - id
      - str
      - Database ID.
-   * - primary_metadata
-     - :ref:`Movie <movie>` or None
-     - Primary agent's existing metadata (available when this agent
-       ``contributes_to`` another agent).
-   * - primary_agent
-     - Agent class or None
-     - The primary agent instance (available when this agent
-       ``contributes_to`` another agent).
    * - items
      - list[:ref:`MediaItem <mediaitem>`]
      - Media items with parts/streams.
@@ -261,14 +372,6 @@ Information provided by the scanner for a TV show item.
    * - episodic
      - bool
      - Whether it's episodic (default True).
-   * - primary_metadata
-     - :ref:`TV_Show <tv-show>` or None
-     - Primary agent's existing metadata (available when this agent
-       ``contributes_to`` another agent).
-   * - primary_agent
-     - Agent class or None
-     - The primary agent instance (available when this agent
-       ``contributes_to`` another agent).
    * - seasons
      - dict[str, :ref:`MediaTree <mediatree>`]
      - Dict of season indices → season :ref:`MediaTree <mediatree>` objects.
@@ -301,14 +404,6 @@ Information provided by the scanner for a music artist.
    * - index
      - str
      - Track index.
-   * - primary_metadata
-     - :ref:`Artist <artist>` or None
-     - Primary agent's existing metadata (available when this agent
-       ``contributes_to`` another agent).
-   * - primary_agent
-     - Agent class or None
-     - The primary agent instance (available when this agent
-       ``contributes_to`` another agent).
    * - albums
      - dict[str, :ref:`MediaTree <mediatree>`]
      - Dict of album GUIDs → album :ref:`MediaTree <mediatree>` objects.
@@ -348,14 +443,6 @@ Information provided by the scanner for a music album.
    * - parent_metadata
      - :ref:`Artist <artist>` or None
      - Parent artist's metadata (loaded from ``parentGUID``).
-   * - primary_metadata
-     - :ref:`Album <album>` or None
-     - Primary agent's existing metadata (available when this agent
-       ``contributes_to`` another agent).
-   * - primary_agent
-     - Agent class or None
-     - The primary agent instance (available when this agent
-       ``contributes_to`` another agent).
    * - tracks
      - dict[str, :ref:`MediaTree <mediatree>`]
      - Dict of track indices → track :ref:`MediaTree <mediatree>` objects.

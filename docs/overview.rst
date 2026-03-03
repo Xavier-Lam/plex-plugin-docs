@@ -48,7 +48,7 @@ Bundle Structure
    │       ├── Shared Code/      # Shared .pys modules
    │       └── Resources/        # Service-specific resources
 
-See :ref:`services` for full details on how services are organised and configured.
+See :ref:`Service API <services>` for full details on how services are organised and configured.
 
 .. _how-the-api-is-exposed:
 

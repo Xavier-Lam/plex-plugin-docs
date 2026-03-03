@@ -1,5 +1,5 @@
 ================================
-Appendix: Info.plist Structure
+Info.plist Structure
 ================================
 
 Every plug-in bundle must contain a ``Contents/Info.plist`` file using Apple's
@@ -57,17 +57,25 @@ Info.plist Keys Reference
    * - ``PlexClientPlatforms``
      - string
      - Comma-separated list of client platforms that can access this plug-in,
-       or ``"*"`` for all platforms.
+       or ``"*"`` for all platforms. See :ref:`ClientPlatform <clientplatform>`
+       constants for known values. The value is matched against the
+       ``X-Plex-Platform`` (or ``X-Plex-Client-Platform``) HTTP header sent by
+       the client. This field is **not** restricted to a fixed set — the
+       framework does not validate the values, so client platforms added after
+       the framework release (e.g. Xbox) may also work if the client sends
+       the corresponding header.
    * - ``PlexMediaTypes``
      - string
      - Comma-separated media type IDs this plug-in supports. See
        :ref:`Media type IDs <plist-mediatypes>` below.
    * - ``PlexPluginCodePolicy``
      - string
-     - Security policy for the plug-in sandbox. ``Standard`` (default) —
-       general purpose with normal restrictions. ``Elevated`` — relaxed
-       restrictions, access to additional APIs (e.g. raw ``os`` path
-       operations). Most plug-ins use ``Standard``.
+     - Security policy for the plug-in sandbox.
+       ``Standard`` (default) runs under normal RestrictedPython restrictions.
+       ``Elevated`` relaxes those restrictions to allow native libraries, extra
+       built-ins, and import whitelist extensions.
+       See :ref:`Policy System <policy-system>` in the Architecture chapter for
+       the full description of each policy level.
    * - ``PlexPluginAPIExclusions``
      - array
      - List of API kit names to exclude from the sandbox. For example,
@@ -131,7 +139,7 @@ Service Keys
 
 Services can be declared in ``Info.plist`` using the *old-style* plist keys
 below, or in a separate ``ServiceInfo.plist`` file using the *new-style*
-format. See :ref:`services` for full details on both approaches.
+format. See :ref:`Channel Plugins <services>` for full details on both approaches.
 
 .. list-table::
    :header-rows: 1

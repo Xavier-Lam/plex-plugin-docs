@@ -10,25 +10,42 @@ for additional context. That archived documentation lacks some details, so this
 repository aims to provide a more comprehensive reference for Plex Plugin development.
 
 This documentation is generated using ``Claude Opus 4.6`` from the source code under
-``Framework.bundle/Contents/Resources/Versions/2/`` and may contain errors — if you
-find any, please report them on `GitHub <https://github.com/Xavier-Lam/plex-plugin-docs>`_.
+``Framework.bundle/Contents/Resources/Versions/2/`` and  **the content is not guaranteed to be correct or
+complete** — if you find any, please report them on `GitHub <https://github.com/Xavier-Lam/plex-plugin-docs>`_.
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents
+   :caption: Getting Started
 
    overview
    architecture
    lifecycle
+   info_plist
    preferences
-   global_functions
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Metadata Agent Plugins
+
    metadata_agents
    metadata_models
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Channel Plugins
+
+   channel_plugins
+   services
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Common API
+
+   global_functions
    template_types
    modern_api
    legacy_api
    proxy_objects
-   services
    networking
    parsing
    data_persistence
@@ -37,8 +54,8 @@ find any, please report them on `GitHub <https://github.com/Xavier-Lam/plex-plug
    locale
    resources
    threading
-   runtime
    cryptography
    helpers
    constants
-   appendix
+   runtime
+
