@@ -18,6 +18,7 @@ html_theme_options = {
     'collapse_navigation': False,
     'sticky_navigation': True,
     'titles_only': False,
+    'style_nav_header_background': '#e5a00d'
 }
 
 # Add GitHub link in the theme header (sphinx_rtd_theme uses these html_context keys)

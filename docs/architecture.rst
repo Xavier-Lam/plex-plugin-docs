@@ -28,20 +28,8 @@ When Plex Media Server loads a plug-in, it executes the following sequence:
       sandbox.
    e. Calls ``Start()`` if defined.
 
-Sandbox & Code Execution
---------------------------
 
-Plug-in code runs inside a **RestrictedPython** sandbox. The sandbox:
-
-- Restricts access to dangerous builtins (``open``, ``exec``, ``eval``,
-  ``import``, ``__import__`` are replaced with safe wrappers).
-- Provides a curated ``environment`` dict of global names that plug-in code
-  can use (e.g. ``HTTP``, ``JSON``, ``Log``, ``Dict``, ``ObjectContainer``).
-- Enforces a **code policy** that controls which APIs are accessible.
-
-Files with the ``.pys`` extension are compiled with RestrictedPython. The
-standard ``.py`` extension is used for the main ``Code/__init__.py`` entry
-point, which is also restricted.
+.. _api-kit-system:
 
 API Kit System
 --------------
@@ -60,38 +48,6 @@ the sandbox:
 
 This is why plug-in code can reference ``HTTP.Request()``, ``JSON.ObjectFromString()``,
 or ``Agent.Movies`` without any explicit ``import`` statements.
-
-.. _policy-system:
-
-Policy System
---------------
-
-Security policies control what APIs and operations are available in different
-contexts:
-
-For plug-in code, the active policy is determined by the ``PlexPluginCodePolicy``
-key in the bundle's ``Info.plist``. Services and model files always use their
-dedicated policies regardless of this setting.
-
-.. list-table::
-   :header-rows: 1
-   :widths: 20 80
-
-   * - Policy
-     - Description
-   * - **Standard**
-     - Default for most plug-ins. General-purpose API access.
-   * - **Elevated**
-     - Relaxed restrictions. Grants access to additional built-ins (``hasattr``,
-       ``getattr``, ``setattr``, ``dir``, ``super``, ``type``), allows bundled
-       native libraries, enables bundle-provided import whitelist extensions,
-       and runs with elevated execution privileges.
-       Set via ``PlexPluginCodePolicy = Elevated`` in ``Info.plist``.
-   * - **ServicePolicy**
-     - Applied to service code (``ServiceCode.pys``). Similar to Standard
-       with service-specific additions.
-   * - **ModelPolicy**
-     - Applied to model template files (``.pym``).
 
 Modelling System
 -----------------

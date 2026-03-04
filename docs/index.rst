@@ -19,6 +19,7 @@ complete** — if you find any, please report them on `GitHub <https://github.co
 
    overview
    architecture
+   sandbox
    lifecycle
    info_plist
    preferences
@@ -27,7 +28,8 @@ complete** — if you find any, please report them on `GitHub <https://github.co
    :maxdepth: 2
    :caption: Metadata Agent Plugins
 
-   metadata_agents
+   metadata_agents_legacy
+   metadata_agents_modern
    metadata_models
 
 .. toctree::

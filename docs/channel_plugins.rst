@@ -4,7 +4,7 @@ Channel Plugins
 
 A **Channel plugin** provides a browsable content hierarchy that Plex clients
 display in the Channels section of the Plex interface. Unlike
-:doc:`Metadata Agents <metadata_agents>` (which enrich existing library items)
+:doc:`Metadata Agents <metadata_agents_legacy>` (which enrich existing library items)
 or :ref:`URL Services <services>` (which resolve media URLs), a Channel plugin
 acts as a self-contained content browser: it exposes a tree of menus and
 playable items that users navigate just like a streaming app.

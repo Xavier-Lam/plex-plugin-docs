@@ -1,5 +1,5 @@
 ========================
-Overview & Architecture
+Overview
 ========================
 
 The Plex Plugin Framework (v2) is a Python 2.7 framework that provides a sandboxed environment for plug-in code. Plug-ins run inside Plex Media Server and can serve as:

@@ -198,37 +198,6 @@ Removes keys not in the provided list.
 - ``key in container`` — check existence
 - ``for key in container`` — iterate over keys
 
-.. _templateobjectcontainer:
-
-Extras Container (Template.ObjectContainer)
---------------------------------------------
-
-.. code-block:: python
-
-   Template.ObjectContainer(*classes)
-
-An internal template type used to define the ``extras`` attribute on metadata
-models. You do not construct this directly — instead, interact with ``extras``
-via the ``add()`` method, passing :ref:`Video Extra <video-extra-types>` objects:
-
-.. code-block:: python
-
-   trailer = TrailerObject(
-       url='https://example.com/trailer',
-       title='Official Trailer',
-       year=2020,
-       thumb='https://example.com/thumb.jpg'
-   )
-   metadata.extras.add(trailer)
-
-See :ref:`Video Extra Types <video-extra-types>` for all available extra types
-and their attributes.
-
-add(obj)
-~~~~~~~~
-
-Adds an object to the container.
-
 .. _link:
 
 Link

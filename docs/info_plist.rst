@@ -74,12 +74,18 @@ Info.plist Keys Reference
        ``Standard`` (default) runs under normal RestrictedPython restrictions.
        ``Elevated`` relaxes those restrictions to allow native libraries, extra
        built-ins, and import whitelist extensions.
-       See :ref:`Policy System <policy-system>` in the Architecture chapter for
-       the full description of each policy level.
+       See :ref:`Policy System <sandbox-policies>` for the full description
+       of each policy level.
    * - ``PlexPluginAPIExclusions``
      - array
      - List of API kit names to exclude from the sandbox. For example,
        ``["Agent"]`` prevents the plug-in from registering agents.
+   * - ``PlexPluginModuleWhitelist``
+     - array
+     - List of additional Python module names that can be imported. Only
+       effective when ``PlexPluginCodePolicy`` is ``Elevated``.
+       The default whitelist (available in all policies) is: ``re``,
+       ``string``, ``datetime``, ``time``.
    * - ``PlexBundleVersion``
      - string
      - Version number of the plug-in bundle.

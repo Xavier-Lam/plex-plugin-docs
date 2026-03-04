@@ -1,43 +1,60 @@
-==================
-Metadata Agent API
-==================
+.. _legacy-metadata-agents:
 
-Metadata agents are classes that inherit from media type base classes and provide ``search()`` and ``update()`` methods.
+===========================
+Legacy Metadata Agent (V0)
+===========================
+
+Legacy metadata agents (``version = 0``, the default) use the traditional
+agent API with :ref:`MediaContainer <mediacontainer>` for search results and
+:ref:`MetadataSearchResult <metadatasearchresult>` objects.
+
+.. _agent-base-classes:
+
+Agent Base Classes
+------------------
+
+All agents inherit from one of the following base classes. The base class
+determines what media type the agent handles.
 
 .. _agent-movies:
 
 Agent.Movies
-------------
+~~~~~~~~~~~~~
 
 Base class for movie metadata agents.
 
 .. _agent-tv-shows:
 
 Agent.TV_Shows
---------------
+~~~~~~~~~~~~~~~
 
 Base class for TV show metadata agents.
 
 .. _agent-artist:
 
 Agent.Artist
-------------
+~~~~~~~~~~~~~
 
 Base class for music artist metadata agents.
 
 .. _agent-album:
 
 Agent.Album
------------
+~~~~~~~~~~~~
 
 Base class for music album metadata agents.
 
 .. _agent-photos:
 
 Agent.Photos
--------------
+~~~~~~~~~~~~~
 
 Base class for photo metadata agents.
+
+.. _agent-class-attributes:
+
+Agent Class Attributes
+-----------------------
 
 All agent base classes share the following class attributes:
 
@@ -80,7 +97,7 @@ All agent base classes share the following class attributes:
    * - version
      - int
      - 0
-     - Agent version (0 = legacy, 1+ = modern).
+     - Agent version. ``0`` = legacy (this chapter), ``1+`` = :ref:`modern <modern-metadata-agents>`.
 
 .. _agent-version-note:
 
@@ -88,15 +105,17 @@ All agent base classes share the following class attributes:
 
    The ``version`` attribute on an agent class controls the *agent API style*:
 
-   - **version 0** (legacy) — ``search()`` receives a :ref:`MediaContainer <mediacontainer>` for ``results`` and you append :ref:`MetadataSearchResult <metadatasearchresult>` objects via ``results.Append(...)``.
-   - **version 1+** (modern) — ``search()`` receives an :ref:`ObjectContainer <objectcontainer>` for ``results`` and you append :ref:`SearchResult <searchresult>` objects via ``results.Append(...)``.
+   - **version 0** (legacy) — ``search()`` receives a :ref:`MediaContainer <mediacontainer>` for ``results`` and you append :ref:`MetadataSearchResult <metadatasearchresult>` objects.
+   - **version 1+** (modern) — ``search()`` receives an :ref:`ObjectContainer <objectcontainer>` for ``results`` and you add :ref:`SearchResult <searchresult>` objects.
 
    This is **not** the same as ``PlexFrameworkVersion`` in ``Info.plist``, which
    selects the framework bootstrap version (always ``"2"`` for modern plug-ins).
    See :ref:`Info.plist keys <plist-keys>` for details.
 
+.. _legacy-search:
+
 search(self, results, media, lang, manual=False)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+--------------------------------------------------
 
 Called when the server needs search results for a media item.
 
@@ -108,13 +127,13 @@ Called when the server needs search results for a media item.
      - Type
      - Description
    * - results
-     - :ref:`MediaContainer <mediacontainer>` (V0) or :ref:`ObjectContainer <objectcontainer>` (V1+)
-     - Container to append results to.
+     - :ref:`MediaContainer <mediacontainer>`
+     - Container to append results to. Use
+       ``results.Append(MetadataSearchResult(...))``.
    * - media
      - :ref:`Media.Movie <media-movie>`, :ref:`Media.TV_Show <media-tv-show>`, :ref:`Media.Artist <media-artist>`, :ref:`Media.Album <media-album>`, etc.
-     - Media hints object (a ``MediaObject`` instance) with information from
-       the scanner (name, year, etc.). The concrete type depends on the agent
-       base class.
+     - Media hints object with information from the scanner (name, year, etc.).
+       The concrete type depends on the agent base class.
    * - lang
      - str
      - :ref:`Language code <language>` for the search.
@@ -155,20 +174,18 @@ agent, the ``media`` object in ``search()`` also has:
      - Identifier string of the primary agent. ``None`` if this is the primary
        agent.
 
-For version 0 agents, append :ref:`MetadataSearchResult <metadatasearchresult>` objects:
+**Example:**
 
 .. code-block:: python
 
    results.Append(MetadataSearchResult(id='123', name='Movie Title', year=2020, score=95, lang=lang))
 
-For version 1+ agents, append :ref:`SearchResult <searchresult>` objects:
+Results are automatically sorted by ``year`` and then by ``score`` (descending).
 
-.. code-block:: python
-
-   results.Append(SearchResult(id='123', name='Movie Title', year=2020, score=95, thumb=thumb_url))
+.. _legacy-update:
 
 update(self, metadata, media, lang, force=False)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+--------------------------------------------------
 
 Called when the server needs metadata for a matched item.
 
@@ -181,15 +198,12 @@ Called when the server needs metadata for a matched item.
      - Description
    * - metadata
      - :ref:`Movie <movie>`, :ref:`TV_Show <tv-show>`, :ref:`Artist <artist>`, :ref:`Album <album>`, etc.
-     - The metadata model instance to populate. This is **your agent's** data
-       object loaded from ``metadata_cls[guid]``. The concrete type depends on
+     - The metadata model instance to populate. The concrete type depends on
        the agent base class.
    * - media
      - :ref:`Media.Movie <media-movie>`, :ref:`Media.TV_Show <media-tv-show>`, :ref:`Media.Artist <media-artist>`, :ref:`Media.Album <media-album>`, etc.
      - The media information. In ``update()``, this is a
        :ref:`MediaTree <mediatree>` with file info, parts, and streams.
-       Attributes like ``items``, ``seasons``, ``episodes`` are accessible
-       directly.
    * - lang
      - str
      - Preferred :ref:`language code <language>`.
@@ -206,12 +220,6 @@ Optional parameters (passed if the function signature accepts them):
    * - Parameter
      - Type
      - Description
-   * - child_guid
-     - str
-     - GUID of a specific child item (for version 1+ parent-level agents).
-   * - child_id
-     - str
-     - Database ID of a specific child item.
    * - periodic
      - bool
      - ``True`` if this update was triggered by a periodic refresh.
@@ -221,28 +229,10 @@ Optional parameters (passed if the function signature accepts them):
        ``artistBio``, ``albumReviews``, ``popularTracks``, ``concerts``,
        ``genres``, ``albumPosters``; values are integers (0 or 1).
 
-.. _update-v1-differences:
-
-Version 1+ update behavior
-^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-When ``version`` is set to ``1`` or higher, ``update()`` is called at the
-**parent level** instead of once per individual item. This is the key practical
-difference from version 0.
-
-For flat media types (movies, music tracks) the behaviour is the same as
-version 0 — there is no parent to promote to.
-
-.. note::
-
-   ``child_guid`` and ``child_id`` are only injected into ``update()`` when
-   PMS actually provides a parent GUID (i.e. when a child item triggers the
-   update). If ``update()`` is called for the top-level item itself (e.g. the
-   show refresh button), these parameters may not be present. Always make them
-   optional in your signature: ``def update(self, metadata, media, lang, force=False, child_guid=None, child_id=None)``.
+.. _legacy-example:
 
 Example Agent
-~~~~~~~~~~~~~
+--------------
 
 .. code-block:: python
 
@@ -273,12 +263,20 @@ Example Agent
                HTTP.Request('https://example.com/poster.jpg').content
            )
 
+.. _media-types:
+
+Media Types
+-----------
+
+Media types represent the information provided by the scanner for each media
+item. In ``search()``, the ``media`` parameter is a ``MediaObject`` with hint
+attributes. In ``update()``, the ``media`` parameter is a :ref:`MediaTree <mediatree>` with
+file information.
+
 .. _media-movie:
 
 Media.Movie
------------
-
-Information provided by the scanner for a movie item.
+~~~~~~~~~~~~
 
 .. list-table::
    :header-rows: 1
@@ -309,9 +307,7 @@ Information provided by the scanner for a movie item.
 .. _media-tv-show:
 
 Media.TV_Show
--------------
-
-Information provided by the scanner for a TV show item.
+~~~~~~~~~~~~~~
 
 .. list-table::
    :header-rows: 1
@@ -345,14 +341,14 @@ Information provided by the scanner for a TV show item.
      - dict[str, :ref:`MediaTree <mediatree>`]
      - Dict of season indices → season :ref:`MediaTree <mediatree>` objects.
 
-Each season :ref:`MediaTree <mediatree>` has an ``episodes`` dict of episode indices → episode :ref:`MediaTree <mediatree>` objects. Each episode :ref:`MediaTree <mediatree>` has an ``items`` list of :ref:`MediaItem <mediaitem>`.
+Each season :ref:`MediaTree <mediatree>` has an ``episodes`` dict of episode
+indices → episode :ref:`MediaTree <mediatree>` objects. Each episode
+:ref:`MediaTree <mediatree>` has an ``items`` list of :ref:`MediaItem <mediaitem>`.
 
 .. _media-artist:
 
 Media.Artist
--------------
-
-Information provided by the scanner for a music artist.
+~~~~~~~~~~~~~~
 
 .. list-table::
    :header-rows: 1
@@ -380,9 +376,7 @@ Information provided by the scanner for a music artist.
 .. _media-album:
 
 Media.Album
-------------
-
-Information provided by the scanner for a music album.
+~~~~~~~~~~~~~
 
 .. list-table::
    :header-rows: 1
@@ -419,7 +413,7 @@ Information provided by the scanner for a music album.
 .. _mediatree:
 
 MediaTree
----------
+~~~~~~~~~~
 
 A tree structure representing the hierarchical media structure for a library item. Media objects (e.g. :ref:`Media.Movie <media-movie>`, :ref:`Media.TV_Show <media-tv-show>`) delegate attribute access to the underlying :ref:`MediaTree <mediatree>`, so properties like ``items``, ``seasons``, and ``episodes`` are accessible directly on the media object.
 
@@ -443,14 +437,14 @@ A tree structure representing the hierarchical media structure for a library ite
 Additional attributes vary by level. For a TV show tree, season-level nodes have an ``episodes`` dict, and episode-level nodes have ``items``. All XML attributes from the server are also set as properties (e.g. ``title``, ``year``, ``originally_available_at``).
 
 all_parts() → list[MediaPart]
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Returns a flat list of all :ref:`MediaPart <mediapart>` objects owned by this node and all its descendants.
 
 .. _mediaitem:
 
 MediaItem
----------
+~~~~~~~~~~
 
 Represents a single media file grouping.
 
@@ -468,7 +462,7 @@ Represents a single media file grouping.
 .. _mediapart:
 
 MediaPart
----------
+~~~~~~~~~~
 
 Represents a single file of a media item.
 
@@ -507,7 +501,7 @@ Represents a single file of a media item.
 .. _mediastream:
 
 MediaStream
------------
+~~~~~~~~~~~~
 
 Represents a single audio, video, or subtitle stream within a part.
 
@@ -540,9 +534,10 @@ Represents a single audio, video, or subtitle stream within a part.
 .. _metadatasearchresult:
 
 MetadataSearchResult
---------------------
+---------------------
 
-A search result returned during an agent ``search()`` call.
+A search result object for legacy (V0) agent ``search()`` calls. Append
+these to the ``results`` :ref:`MediaContainer <mediacontainer>`.
 
 .. code-block:: python
 
