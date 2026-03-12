@@ -464,9 +464,13 @@ object trees returned from PMS; not typically constructed directly in plugin cod
 SearchResult
 ------------
 
-Represents a single candidate returned by an agent ``search()`` in version 1+. Append
-``SearchResult`` objects to the :ref:`ObjectContainer <objectcontainer>` passed as
-``results``. ``SearchResult`` children can be nested to represent hierarchical results
+Represents a single candidate returned by an agent's ``search()`` method when
+using the modern search API. This includes :ref:`V0 agents with the tree parameter <search-with-tree>`
+and :ref:`V2 Agent.Artist <modern-search>`.
+
+Append ``SearchResult`` objects to the :ref:`ObjectContainer <objectcontainer>` passed as
+``results`` via ``results.add(SearchResult(...))``.
+``SearchResult`` children can be nested to represent hierarchical results
 (e.g. episodes within a show).
 
 .. list-table::
@@ -478,25 +482,32 @@ Represents a single candidate returned by an agent ``search()`` in version 1+. A
      - Description
    * - type
      - str
-     - Media type identifier.
+     - Media type identifier (e.g. ``'artist'``, ``'movie'``).
    * - id
      - str
      - Source-specific identifier used to retrieve metadata in ``update()``.
+       For contributing agents, this is passed as the ``id`` parameter to the
+       agent's ``_update`` method. For primary agents, PMS uses this along
+       with the plugin identifier to construct the GUID.
    * - name
      - str
      - Display name of the result.
    * - guid
      - str
-     - Plex GUID string.
+     - Explicit Plex GUID string. If set, PMS uses this directly instead of
+       constructing one from ``id``.
    * - index
      - str
      - Positional index.
    * - year
-     - str
-     - Release year.
+     - int or str
+     - Release year (converted to string in XML).
    * - score
-     - str
-     - Match confidence score (0–100).
+     - int
+     - Match confidence score (0–100). Must be an integer — used for sorting
+       results in descending order and for score-threshold checks during
+       contributing agent matching. Contributing agents need a score above
+       75 to be considered a match.
    * - thumb
      - str
      - Thumbnail URL.
@@ -505,7 +516,7 @@ Represents a single candidate returned by an agent ``search()`` in version 1+. A
      - ``"1"`` if already matched.
    * - parentName
      - str
-     - Name of the parent item (e.g. show title for an episode result).
+     - Name of the parent item (e.g. artist name for an album result).
    * - parentID
      - str
      - Identifier of the parent item.

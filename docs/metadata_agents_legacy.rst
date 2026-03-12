@@ -97,7 +97,9 @@ All agent base classes share the following class attributes:
    * - version
      - int
      - 0
-     - Agent version. ``0`` = legacy (this chapter), ``1+`` = :ref:`modern <modern-metadata-agents>`.
+     - Agent version. ``0`` = legacy (this chapter), ``2`` = :ref:`modern Artist <modern-metadata-agents>`.
+       See :ref:`modern search API <modern-metadata-agents>` for using modern
+       search objects with V0 agents via the ``tree`` parameter.
 
 .. _agent-version-note:
 
@@ -105,8 +107,8 @@ All agent base classes share the following class attributes:
 
    The ``version`` attribute on an agent class controls the *agent API style*:
 
-   - **version 0** (legacy) — ``search()`` receives a :ref:`MediaContainer <mediacontainer>` for ``results`` and you append :ref:`MetadataSearchResult <metadatasearchresult>` objects.
-   - **version 1+** (modern) — ``search()`` receives an :ref:`ObjectContainer <objectcontainer>` for ``results`` and you add :ref:`SearchResult <searchresult>` objects.
+   - **version 0** (legacy) — ``search()`` receives a :ref:`MediaContainer <mediacontainer>` for ``results`` and you append :ref:`MetadataSearchResult <metadatasearchresult>` objects. If ``search()`` accepts a ``tree`` keyword argument, the framework switches to :ref:`ObjectContainer <objectcontainer>` + :ref:`SearchResult <searchresult>` instead (see :ref:`Using the tree Parameter <search-with-tree>`).
+   - **version 2** (modern, Artist only) — ``search()`` receives an :ref:`ObjectContainer <objectcontainer>` for ``results`` and you add :ref:`SearchResult <searchresult>` objects. Only supported for :ref:`Agent.Artist <agent-artist>`.
 
    This is **not** the same as ``PlexFrameworkVersion`` in ``Info.plist``, which
    selects the framework bootstrap version (always ``"2"`` for modern plug-ins).
@@ -114,8 +116,8 @@ All agent base classes share the following class attributes:
 
 .. _legacy-search:
 
-search(self, results, media, lang, manual=False)
---------------------------------------------------
+search(self, results, media, lang, manual=False, tree=None)
+-----------------------------------------------------------
 
 Called when the server needs search results for a media item.
 
@@ -140,6 +142,11 @@ Called when the server needs search results for a media item.
    * - manual
      - bool
      - True if the user initiated the search manually.
+   * - tree
+     - :ref:`MediaTree <mediatree>` or None
+     - Keyword argument. When present in the method signature, the framework
+       switches to modern search objects — see
+       :ref:`Using the tree Parameter <search-with-tree>` below.
 
 Optional parameters (passed if the function signature accepts them):
 
@@ -181,6 +188,48 @@ agent, the ``media`` object in ``search()`` also has:
    results.Append(MetadataSearchResult(id='123', name='Movie Title', year=2020, score=95, lang=lang))
 
 Results are automatically sorted by ``year`` and then by ``score`` (descending).
+
+.. _search-with-tree:
+
+Using the ``tree`` Parameter
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The framework inspects your ``search()`` function signature at startup. If the
+method declares a ``tree`` keyword argument, the framework automatically
+switches to the modern search API for that agent:
+
+- ``results`` is passed as an :ref:`ObjectContainer <objectcontainer>` instead
+  of a :ref:`MediaContainer <mediacontainer>`.
+- ``tree`` receives a :ref:`MediaTree <mediatree>` built from the database,
+  providing the full file and stream hierarchy for the item.
+- Use ``results.add(SearchResult(...))`` instead of
+  ``results.Append(MetadataSearchResult(...))``. ``SearchResult`` accepts
+  ``id``, ``name``, ``year``, ``score``, ``type``, and ``parentName``.
+
+This works for all agent types — Movies, TV Shows, Albums, and Photos — without
+changing ``version``. The ``update()`` method signature and behaviour are
+unaffected.
+
+**Example — Movie agent with tree:**
+
+.. code-block:: python
+
+   class MyMovieAgent(Agent.Movies):
+       name = 'My Movie Agent'
+       languages = [Locale.Language.English]
+       primary_provider = True
+
+       def search(self, results, media, lang, manual=False, tree=None):
+           results.add(SearchResult(
+               id='12345',
+               name=media.name,
+               year=int(media.year),
+               score=100,
+           ))
+
+       def update(self, metadata, media, lang, force=False):
+           metadata.title = 'Movie Title'
+           metadata.year = 2020
 
 .. _legacy-update:
 

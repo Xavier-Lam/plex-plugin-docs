@@ -57,10 +57,12 @@ Movie
      - Audience rating.
    * - rating_image
      - str
-     - Rating image identifier.
+     - :ref:`Rating image identifier <image-identifiers>`. Tells Plex clients
+       which icon to display next to the critic ``rating``.
    * - audience_rating_image
      - str
-     - Audience rating image identifier.
+     - :ref:`Rating image identifier <image-identifiers>`. Tells Plex clients
+       which icon to display next to the ``audience_rating``.
    * - original_title
      - str
      - Original title (foreign language).
@@ -840,3 +842,97 @@ Music-video extra attributes
    * - album
      - str
      - Associated album name (serialized as ``parentTitle`` in XML).
+
+.. _image-identifiers:
+
+Rating Image Identifiers
+--------------------------
+
+The ``rating_image`` and ``audience_rating_image`` attributes on metadata models
+are **not** URLs pointing to image files. They are **identifier strings** in a
+URI scheme format that Plex clients (and the server) map to built-in icons for
+displaying rating badges next to scores (e.g. the Rotten Tomatoes "Fresh"
+tomato or the IMDb logo).
+
+Format
+~~~~~~~
+
+Rating image identifiers follow the pattern:
+
+.. code-block:: text
+
+   <source>://image.rating[.<variant>]
+
+Where ``<source>`` is a recognized rating provider and ``<variant>`` specifies
+the icon variant.
+
+Known Identifiers
+~~~~~~~~~~~~~~~~~~
+
+The following identifiers are used by the official PlexMovie agent:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 50 50
+
+   * - Identifier
+     - Description
+   * - ``imdb://image.rating``
+     - IMDb rating icon. Used for ``rating_image`` when IMDb is the rating source.
+   * - ``rottentomatoes://image.rating.certified``
+     - Rotten Tomatoes "Certified Fresh" badge.
+   * - ``rottentomatoes://image.rating.ripe``
+     - Rotten Tomatoes "Fresh" tomato.
+   * - ``rottentomatoes://image.rating.rotten``
+     - Rotten Tomatoes "Rotten" splat.
+   * - ``rottentomatoes://image.rating.upright``
+     - Rotten Tomatoes audience "Upright" popcorn (for ``audience_rating_image``).
+   * - ``rottentomatoes://image.rating.spilled``
+     - Rotten Tomatoes audience "Spilled" popcorn (for ``audience_rating_image``).
+
+Usage
+~~~~~~
+
+Set ``rating_image`` and ``audience_rating_image`` alongside their corresponding
+numeric scores:
+
+.. code-block:: python
+
+   def update(self, metadata, media, lang, force=False):
+       # IMDb rating
+       metadata.rating = 7.5
+       metadata.rating_image = 'imdb://image.rating'
+       metadata.audience_rating = 0.0
+       metadata.audience_rating_image = None
+
+       # Rotten Tomatoes ratings
+       metadata.rating = 8.5                                     # critics score / 10
+       metadata.rating_image = 'rottentomatoes://image.rating.certified'
+       metadata.audience_rating = 9.2                             # audience score / 10
+       metadata.audience_rating_image = 'rottentomatoes://image.rating.upright'
+
+.. note::
+
+   The ``rating``, ``rating_image``, ``audience_rating``, and
+   ``audience_rating_image`` attributes are **linked** in the framework's
+   metadata combination pipeline. When ``rating`` is selected from a particular
+   agent during combination, all four linked attributes are taken from the same
+   agent. This means you should always set both the numeric rating and the
+   corresponding image identifier together.
+
+   To clear a rating image, set it to an empty string (``''``) or ``None``.
+
+Can Plugins Define Custom Image Identifiers?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+No. The mapping from identifier strings to actual images is handled by the Plex
+Media Server and Plex clients internally. Only the identifiers recognized by PMS
+(such as those listed above) will render icons. Setting a custom identifier like
+``myplugin://image.rating.good`` will not cause an error, but Plex clients will
+not display any icon for it.
+
+If you need to display a rating from a different source, you can:
+
+- Use one of the existing identifiers that closest represents your rating style.
+- Set only the numeric ``rating`` / ``audience_rating`` without an image
+  identifier (the Plex UI will display the score without a provider icon).
